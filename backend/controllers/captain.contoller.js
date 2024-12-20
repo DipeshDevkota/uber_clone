@@ -106,4 +106,12 @@ const loginCaptain = async(req,res)=>{
 };
 
 
-module.exports={registerCaptain,loginCaptain}
+const getProfile= async(req,res)=>{
+
+}
+
+
+const logoutCaptain = async(req,res)=>{
+
+}
+module.exports={registerCaptain,loginCaptain,getProfile,logoutCaptain}
