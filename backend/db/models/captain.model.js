@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-
+const validator = require('validator');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken')
 const captainSchema = new mongoose.Schema({
     fullname: {
         firstname: {
@@ -17,9 +19,25 @@ const captainSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true ,
+        validate(value)
+        {
+            if(!validator.isEmail(value))
+            {
+                throw new Error('Invalid email address',value)
+            }
+
+        },
     password: {
         type: String,
-        required: true // Removed unique; unique constraint typically applies to identifiers like email
+        required: true,
+        validate(value)
+        {
+            if(!validator.isStrongPassword)
+            {
+                throw new Error("Is not a strong password",value)
+            }
+        }
+        
     },
     socketId: {
         type: String,
