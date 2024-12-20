@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const {registerUser} = require("../controllers/captain.contoller")
+const {registerCaptain,loginCaptain} = require("../controllers/captain.contoller")
 
 
 
-router.post('/register',registerUser)
+router.post('/register',registerCaptain);
+router.post('/login',loginCaptain)
+
 
 
 

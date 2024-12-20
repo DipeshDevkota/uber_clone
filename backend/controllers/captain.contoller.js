@@ -1,7 +1,7 @@
 const { validationResult } = require("express-validator");
 const CaptainModel = require("../db/models/captain.model")
 const captainService = require("../services/captain.service");
-const registerUser = async(req,res)=>{
+const registerCaptain = async(req,res)=>{
     try {
       
         const errors = validationResult(req);
@@ -55,4 +55,55 @@ const registerUser = async(req,res)=>{
     }
 }
 
-module.exports={registerUser}
+
+const loginCaptain = async(req,res)=>{
+    try {
+          const errors = validationResult(req);
+
+          if(!errors.isEmpty())
+          {
+            return res.status(400).json({errors:errors.array()});
+          };
+
+
+          const {email,password} = req.body;
+          if(!email || !password)
+          {
+            return res.status(401).json({message:"All fields are required!"})
+          }
+
+
+          const captain = await CaptainModel.findOne({email}).select('+password');
+
+          if(!captain)
+          {
+            return res.status(401).json({message:"Captain doesn't exist!"})
+          };
+
+          const isMatch= await captain.comparePassword(password);
+
+          if(!isMatch)
+          {
+            return res.status(401).json({message:"You are not authenticated!!"});
+          }
+
+          const token = captain.generateAuthToken();
+
+          res.cookie("token",token,{
+            httpOnly: true,
+            secure:false,
+            sameSite:"strict",
+          });
+
+
+          res.send({captain,token});
+        
+    } catch (error) {
+
+        return res.status(500).json({message:"Server error while logging in",error:error.message})
+        
+    }
+};
+
+
+module.exports={registerCaptain,loginCaptain}
