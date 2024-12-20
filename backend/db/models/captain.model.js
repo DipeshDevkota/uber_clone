@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+
 const captainSchema = new mongoose.Schema({
     fullname: {
         firstname: {
@@ -18,26 +19,22 @@ const captainSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true ,
-        validate(value)
-        {
-            if(!validator.isEmail(value))
-            {
-                throw new Error('Invalid email address',value)
-            }
-
-        },
-    password: {
-        type: String,
-        required: true,
-        validate(value)
-        {
-            if(!validator.isStrongPassword)
-            {
-                throw new Error("Is not a strong password",value)
+        unique: true,
+        validate(value) {
+            if (!validator.isEmail(value)) {
+                throw new Error('Invalid email address');
             }
         }
-        
+    },
+    password: {
+        // select: false, 
+        type: String,
+        required: true,
+        validate(value) {
+            if (!validator.isStrongPassword(value)) {
+                throw new Error("Password is not strong enough");
+            }
+        }
     },
     socketId: {
         type: String,
@@ -71,45 +68,51 @@ const captainSchema = new mongoose.Schema({
         location: {
             lat: {
                 type: Number,
-                required: true // Make required if it's essential for business logic
+                // required: true // Make required if it's essential for business logic
             },
             lng: {
                 type: Number,
-                required: true // Make required if it's essential for business logic
+                // required: true // Make required if it's essential for business logic
             }
         }
     }
-}}, {
+}, {
     timestamps: true
 });
 
+// Pre-save hook to hash password before saving it to the DB
+captainSchema.pre('save', async function(next) {
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
+});
 
-
-captainSchema.methods.generateAuthToken = function(){
-    const token = jwt.sign({_id:this._id}, process.env.SECRET_KEY,{ expiresIn: '30d'})
-    return token;   
+// Method to generate authentication token
+captainSchema.methods.generateAuthToken = function() {
+    const token = jwt.sign({ _id: this._id }, process.env.SECRET_KEY, { expiresIn: '30d' });
+    return token;
 }
 
-
-captainSchema.statics.verifyToken = function(token){
-    const decodedtoken = jwt.verify(token,process.env.SECRET_KEY);
-    return decodedtoken;
+// Static method to verify authentication token
+captainSchema.statics.verifyToken = function(token) {
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+    return decodedToken;
 }
 
-
-captainSchema.statics.hashPassword = async function(password){
-    return await bcrypt.hash(password,10)
+// Static method to hash the password
+captainSchema.statics.hashPassword = async function(password) {
+    return await bcrypt.hash(password, 10);
 };
 
-
-captainSchema.methods.comparePassword= async function(password){
-    return await bcrypt.compare(password,this.password)
-
-}
-
+// Method to compare the plain text password with the hashed password
+captainSchema.methods.comparePassword = async function(password) {
+    // Compare the plain password with the hashed password
+    console.log("Comparing password:", password);  // Log the password argument
+    console.log("Stored hashed password:", this.password);
+    return await bcrypt.compare(password, this.password);
+};
 
 const Captain = mongoose.model('Captain', captainSchema);
-
-
 
 module.exports = Captain;
