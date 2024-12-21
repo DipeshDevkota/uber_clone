@@ -114,13 +114,67 @@ const loginCaptain = async (req, res) => {
 
 
 const getProfile= async(req,res)=>{
+    try {
+    const captain = req.captain
+   
+
+        console.log("Captain is ",captain);
+
+        res.send({message:"User's profile is:",captain})
+
+
+        
+    } catch (error) {
+
+        console.log("Server error")
+        return res.status(401).json(error.message)
+        
+
+    }
 
 }
 
 
-const logoutCaptain = async(req,res)=>{
+const blacklist = new Set(); // Temporary in-memory blacklist, replace with a persistent store for production use
 
-}
+const logoutCaptain = async (req, res) => {
+    try {
+        // Step 1: Extract the token from cookies or authorization headers
+        const token = req.cookies?.token || (req.headers.authorization && req.headers.authorization.split(" ")[1]);
+
+        if (!token) {
+            return res.status(400).json({ message: "No token found. User is already logged out or session is invalid." });
+        }
+
+        // Step 2: Blacklist the token (optional, replace with a database or Redis for production use)
+        blacklist.add(token);
+
+        // Optional: Set an expiry for the blacklist token (e.g., 24 hours)
+        setTimeout(() => {
+            blacklist.delete(token);
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+        // Step 3: Clear the token cookie
+        res.cookie("token", null, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",  // Set secure to true in production only
+            sameSite: "strict",
+            expires: new Date(Date.now()),
+        });
+        
+
+        // Step 4: Send a success response
+        return res.status(200).json({ message: "User logged out successfully!" });
+    } catch (error) {
+        // Step 5: Log and handle errors
+        console.error("Logout error:", error);
+
+        return res.status(500).json({
+            message: "An internal server error occurred during logout. Please try again later.",
+            error: error.message,
+        });
+    }
+};
 // ... rest of the code remains the same ...
 
 module.exports = { registerCaptain, loginCaptain,getProfile,logoutCaptain };

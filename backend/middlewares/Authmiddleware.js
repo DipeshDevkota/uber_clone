@@ -42,7 +42,7 @@ const AuthCaptain = async (req,res,next)=>{
      const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
      const {_id} = decodedToken;
 
-     const captain = await CaptainModel.findById(_id).select("firstname lastname");
+     const captain = await CaptainModel.findById(_id).select("fullname vehicle email status")
      if(!captain)
      {
       return res.status(404).json({message:"Captain not found!"});

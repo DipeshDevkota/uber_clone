@@ -6,7 +6,7 @@ const {AuthCaptain} = require("../middlewares/Authmiddleware")
 router.post('/register',registerCaptain);
 router.post('/login',loginCaptain );
 router.get('/profile',AuthCaptain,getProfile);
-router.post('/logout',logoutCaptain)
+router.post('/logout',AuthCaptain,logoutCaptain)
 
 
 
