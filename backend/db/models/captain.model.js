@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 const captainSchema = new mongoose.Schema({
     fullname: {
@@ -27,14 +25,8 @@ const captainSchema = new mongoose.Schema({
         }
     },
     password: {
-        // select: false, 
         type: String,
-        required: true,
-        validate(value) {
-            if (!validator.isStrongPassword(value)) {
-                throw new Error("Password is not strong enough");
-            }
-        }
+        required: true
     },
     socketId: {
         type: String,
@@ -58,7 +50,7 @@ const captainSchema = new mongoose.Schema({
         capacity: {
             type: Number,
             required: true,
-            min: [1, 'Capacity must be at least 1'] // Corrected to `min` for numeric validation
+            min: [1, 'Capacity must be at least 1']
         },
         vehicleType: {
             type: String,
@@ -68,50 +60,15 @@ const captainSchema = new mongoose.Schema({
         location: {
             lat: {
                 type: Number,
-                // required: true // Make required if it's essential for business logic
             },
             lng: {
                 type: Number,
-                // required: true // Make required if it's essential for business logic
             }
         }
     }
 }, {
     timestamps: true
 });
-
-// Pre-save hook to hash password before saving it to the DB
-captainSchema.pre('save', async function(next) {
-    if (this.isModified('password')) {
-        this.password = await bcrypt.hash(this.password, 10);
-    }
-    next();
-});
-
-// Method to generate authentication token
-captainSchema.methods.generateAuthToken = function() {
-    const token = jwt.sign({ _id: this._id }, process.env.SECRET_KEY, { expiresIn: '30d' });
-    return token;
-}
-
-// Static method to verify authentication token
-captainSchema.statics.verifyToken = function(token) {
-    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-    return decodedToken;
-}
-
-// Static method to hash the password
-captainSchema.statics.hashPassword = async function(password) {
-    return await bcrypt.hash(password, 10);
-};
-
-// Method to compare the plain text password with the hashed password
-captainSchema.methods.comparePassword = async function(password) {
-    // Compare the plain password with the hashed password
-    console.log("Comparing password:", password);  // Log the password argument
-    console.log("Stored hashed password:", this.password);
-    return await bcrypt.compare(password, this.password);
-};
 
 const Captain = mongoose.model('Captain', captainSchema);
 
